@@ -1,0 +1,120 @@
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_KEY;
+const TWILIO_SID = process.env.TWILIO_SID;
+const TWILIO_TOKEN = process.env.TWILIO_TOKEN;
+const TWILIO_FROM = process.env.TWILIO_FROM;
+const APP_URL = process.env.APP_URL || 'https://callback-woad.vercel.app';
+
+async function supabaseGet(path) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1${path}`, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json'
+    }
+  });
+  return res.json();
+}
+
+async function supabasePatch(path, body) {
+  await fetch(`${SUPABASE_URL}/rest/v1${path}`, {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify(body)
+  });
+}
+
+async function makeCall(phone, name, service, time, salonName, sid, token, from) {
+  const twiml = `<Response><Say voice="alice">Hello ${name}, this is a reminder from ${salonName}. You have a ${service} appointment tomorrow at ${time}. Please call us if you need to reschedule. Thank you!</Say></Response>`;
+  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Calls.json`, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64'),
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: new URLSearchParams({ To: phone, From: from, Twiml: twiml, Timeout: '30' })
+  });
+  return res.json();
+}
+
+async function sendSMS(phone, name, service, time, sid, token, from) {
+  const msg = `Hi ${name}, reminder: your ${service} appointment is tomorrow at ${time}. Reply YES to confirm or NO to cancel.`;
+  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64'),
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: new URLSearchParams({ To: phone, From: from, Body: msg })
+  });
+  return res.json();
+}
+
+export default async function handler(req, res) {
+  // Verify this is coming from Vercel cron
+  const authHeader = req.headers['authorization'];
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const now = new Date();
+  const in24hrs = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const in25hrs = new Date(now.getTime() + 25 * 60 * 60 * 1000);
+
+  // Format for Supabase query
+  const from24 = in24hrs.toISOString();
+  const to25 = in25hrs.toISOString();
+
+  try {
+    // Get all appointments due for reminders in the next 24-25hr window
+    const appointments = await supabaseGet(
+      `/appointments?reminder_sent=eq.false&status=eq.pending&appointment_time=gte.${from24}&appointment_time=lte.${to25}&select=*,salons(*)`
+    );
+
+    if (!appointments || !appointments.length) {
+      return res.status(200).json({ message: 'No reminders due', checked: now.toISOString() });
+    }
+
+    const results = [];
+
+    for (const appt of appointments) {
+      const salon = appt.salons;
+      const sid = salon?.twilio_sid || TWILIO_SID;
+      const token = salon?.twilio_token || TWILIO_TOKEN;
+      const twilioFrom = salon?.twilio_from || TWILIO_FROM;
+      const salonName = salon?.name || 'your salon';
+
+      if (!sid || !token || !twilioFrom) {
+        results.push({ id: appt.id, status: 'skipped', reason: 'No Twilio config' });
+        continue;
+      }
+
+      const timeStr = new Date(appt.appointment_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+      // Mark as calling first
+      await supabasePatch(`/appointments?id=eq.${appt.id}`, { status: 'calling', reminder_sent: true });
+
+      // Make call
+      const call = await makeCall(appt.client_phone, appt.client_name, appt.service, timeStr, salonName, sid, token, twilioFrom);
+
+      if (call.sid) {
+        await supabasePatch(`/appointments?id=eq.${appt.id}`, { call_sid: call.sid });
+        results.push({ id: appt.id, status: 'called', callSid: call.sid });
+      } else {
+        // Call failed - send SMS fallback
+        const sms = await sendSMS(appt.client_phone, appt.client_name, appt.service, timeStr, sid, token, twilioFrom);
+        await supabasePatch(`/appointments?id=eq.${appt.id}`, { status: 'sms-sent' });
+        results.push({ id: appt.id, status: 'sms_fallback', smsSid: sms.sid });
+      }
+    }
+
+    return res.status(200).json({ processed: results.length, results });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+}
