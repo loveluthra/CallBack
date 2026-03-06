@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Callback — Salon Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --black: #060608; --white: #f5f4f0; --lime: #c8f135; --gray: #1a1a1e;
+  --gray2: #242428; --muted: #666672; --border: rgba(255,255,255,0.08);
+  --success: #30d158; --warning: #ffd60a; --danger: #ff5f57; --accent2: #f5c96a;
+}
+* { box-sizing: border-box; }
+body { background: var(--black); color: var(--white); font-family: 'Syne', sans-serif; min-height: 100vh; }
+
+/* AUTH SCREEN */
+.auth-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--black);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-bg {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(200,241,53,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(200,241,53,0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+.auth-glow {
+  position: absolute;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(200,241,53,0.1) 0%, transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.auth-card {
+  background: var(--gray);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 44px 40px;
+  width: 440px;
+  max-width: 95vw;
+  position: relative;
+  z-index: 1;
+  animation: fadeUp 0.6s ease;
+}
+
+@keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+.auth-logo {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.8rem;
+  margin-bottom: 6px;
+  text-align: center;
+}
+.auth-logo span { color: var(--lime); }
+.auth-tagline { text-align: center; color: var(--muted); font-size: 0.82rem; margin-bottom: 36px; }
+
+.auth-tabs {
+  display: flex;
+  background: var(--gray2);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 28px;
+  gap: 4px;
+}
+
+.auth-tab {
+  flex: 1;
+  text-align: center;
+  padding: 9px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  transition: all 0.2s;
+}
+.auth-tab.active { background: var(--gray); color: var(--white); }
+
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 0.72rem; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+.form-input, .form-select {
+  width: 100%;
+  background: var(--gray2);
+  border: 1px solid var(--border);
+  color: var(--white);
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-family: 'Syne', sans-serif;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.form-input:focus, .form-select:focus { border-color: var(--lime); }
+.form-input::placeholder { color: var(--muted); }
+.form-select option { background: var(--gray2); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.auth-btn {
+  width: 100%;
+  background: var(--lime);
+  color: var(--black);
+  border: none;
+  padding: 13px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+.auth-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+.auth-divider { text-align: center; color: var(--muted); font-size: 0.75rem; margin: 16px 0; }
+.auth-error { background: rgba(255,95,87,0.1); border: 1px solid var(--danger); color: var(--danger); padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 16px; display: none; }
+
+/* ONBOARDING */
+.onboarding-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--black);
+  padding: 40px 20px;
+}
+
+.onboarding-card {
+  background: var(--gray);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 44px 40px;
+  width: 560px;
+  max-width: 95vw;
+  animation: fadeUp 0.5s ease;
+}
+
+.onboarding-step-indicator {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.ob-step {
+  height: 3px;
+  flex: 1;
+  background: var(--border);
+  border-radius: 2px;
+  transition: background 0.3s;
+}
+.ob-step.done { background: var(--lime); }
+.ob-step.active { background: rgba(200,241,53,0.5); }
+
+.onboarding-title { font-family: 'Instrument Serif', serif; font-size: 1.8rem; margin-bottom: 8px; }
+.onboarding-sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 28px; line-height: 1.6; }
+
+.ob-btn {
+  background: var(--lime);
+  color: var(--black);
+  border: none;
+  padding: 13px 28px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  transition: all 0.2s;
+}
+.ob-btn:hover { opacity: 0.88; }
+.ob-btn-skip {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  margin-left: 14px;
+  transition: color 0.2s;
+}
+.ob-btn-skip:hover { color: var(--white); }
+
+.twilio-info {
+  background: rgba(200,241,53,0.06);
+  border: 1px solid rgba(200,241,53,0.2);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 0.8rem;
+  color: var(--lime);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+/* MAIN APP */
+.app-shell { display: none; }
+.app-shell.visible { display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 260px;
+  background: var(--gray);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+  flex-shrink: 0;
+}
+
+.sidebar-logo {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.4rem;
+  padding: 0 8px;
+  margin-bottom: 28px;
+}
+.sidebar-logo span { color: var(--lime); }
+
+.nav-label { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); padding: 8px 10px 4px; margin-top: 8px; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--muted);
+  transition: all 0.15s;
+  border: 1px solid transparent;
+  margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--gray2); color: var(--white); }
+.nav-item.active { background: var(--gray2); color: var(--white); border-color: var(--border); }
+.nav-item.active .nav-icon { color: var(--lime); }
+.nav-icon { font-size: 0.95rem; width: 18px; text-align: center; }
+
+.nav-badge {
+  margin-left: auto;
+  background: var(--lime);
+  color: #000;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 100px;
+}
+
+.sidebar-bottom { margin-top: auto; }
+
+.salon-info {
+  background: var(--gray2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.salon-avatar {
+  width: 34px; height: 34px;
+  background: var(--lime);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--black);
+  flex-shrink: 0;
+}
+
+.salon-name { font-size: 0.82rem; font-weight: 600; }
+.salon-plan { font-size: 0.7rem; color: var(--lime); }
+
+.logout-btn {
+  width: 100%;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 9px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  transition: all 0.2s;
+}
+.logout-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+/* MAIN CONTENT */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.page { display: none; flex-direction: column; gap: 20px; }
+.page.active { display: flex; }
+
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.page-title { font-family: 'Instrument Serif', serif; font-size: 1.7rem; line-height: 1.2; }
+.page-sub { color: var(--muted); font-size: 0.82rem; margin-top: 3px; }
+
+/* STATS */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+.stat-card {
+  background: var(--gray);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  transition: border-color 0.2s;
+}
+.stat-card:hover { border-color: rgba(200,241,53,0.2); }
+.stat-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 10px; }
+.stat-value { font-family: 'Instrument Serif', serif; font-size: 2rem; line-height: 1; }
+.stat-value.lime { color: var(--lime); }
+.stat-value.green { color: var(--success); }
+.stat-value.yellow { color: var(--warning); }
+.stat-value.red { color: var(--danger); }
+.stat-sub { font-size: 0.7rem; color: var(--muted); margin-top: 5px; }
+
+/* BTN */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 10px 18px; border-radius: 8px;
+  font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; border: none;
+  transition: all 0.15s;
+  font-family: 'Syne', sans-serif;
+  text-decoration: none;
+}
+.btn-lime { background: var(--lime); color: var(--black); }
+.btn-lime:hover { opacity: 0.85; transform: translateY(-1px); }
+.btn-ghost { background: var(--gray2); color: var(--white); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: #444; }
+.btn-danger { background: transparent; color: var(--danger); border: 1px solid rgba(255,95,87,0.3); }
+.btn-danger:hover { background: var(--danger); color: #fff; }
+.btn-sm { padding: 6px 12px; font-size: 0.75rem; }
+
+/* MODAL */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(6px); }
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--gray);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px;
+  width: 500px; max-width: 95vw;
+  animation: fadeUp 0.2s ease;
+}
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.modal-title { font-family: 'Instrument Serif', serif; font-size: 1.4rem; }
+.modal-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.3rem; padding: 4px; }
+.modal-close:hover { color: var(--white); }
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
+
+/* TABLE */
+.table-wrap {
+  background: var(--gray);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.table-head { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.table-title { font-size: 0.88rem; font-weight: 600; }
+table { width: 100%; border-collapse: collapse; }
+thead th { text-align: left; padding: 11px 18px; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); border-bottom: 1px solid var(--border); font-weight: 600; }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--gray2); }
+td { padding: 13px 18px; font-size: 0.83rem; vertical-align: middle; }
+
+/* STATUS */
+.status { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 100px; font-size: 0.7rem; font-weight: 600; }
+.s-dot { width: 5px; height: 5px; border-radius: 50%; }
+.s-pending { background: rgba(255,214,10,0.12); color: var(--warning); }
+.s-pending .s-dot { background: var(--warning); }
+.s-confirmed { background: rgba(48,209,88,0.12); color: var(--success); }
+.s-confirmed .s-dot { background: var(--success); }
+.s-calling { background: rgba(200,241,53,0.1); color: var(--lime); }
+.s-calling .s-dot { background: var(--lime); animation: pulse 1s infinite; }
+.s-noanswer { background: rgba(255,95,87,0.1); color: var(--danger); }
+.s-noanswer .s-dot { background: var(--danger); }
+.s-sms { background: rgba(245,201,106,0.12); color: var(--accent2); }
+.s-sms .s-dot { background: var(--accent2); }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+/* LOG */
+.log-wrap { background: var(--gray); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.log-head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.log-body { padding: 14px 18px; display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; font-family: monospace; }
+.log-entry { display: flex; gap: 12px; font-size: 0.76rem; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+.log-time { color: var(--muted); min-width: 78px; }
+.log-msg.success { color: var(--success); }
+.log-msg.warning { color: var(--warning); }
+.log-msg.info { color: var(--lime); }
+.log-msg.error { color: var(--danger); }
+
+/* SETTINGS CARD */
+.settings-card { background: var(--gray); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
+.settings-title { font-size: 0.88rem; font-weight: 600; margin-bottom: 18px; }
+
+/* TOAST */
+.toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 300; }
+.toast {
+  background: var(--gray);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 0.8rem;
+  display: flex; align-items: center; gap: 10px;
+  min-width: 260px;
+  animation: slideIn 0.3s ease;
+}
+@keyframes slideIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+.toast.success { border-left: 3px solid var(--success); }
+.toast.error { border-left: 3px solid var(--danger); }
+.toast.info { border-left: 3px solid var(--lime); }
+
+/* EMPTY */
+.empty { text-align: center; padding: 50px 20px; color: var(--muted); }
+.empty-icon { font-size: 2.2rem; margin-bottom: 10px; }
+.empty-title { font-size: 0.95rem; color: var(--white); margin-bottom: 4px; }
+.empty-sub { font-size: 0.8rem; }
+
+/* FLOW */
+.flow-card { background: var(--gray); border: 1px solid var(--border); border-radius: 14px; padding: 20px 24px; }
+.flow-title { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 16px; }
+.flow-steps { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.flow-step { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; min-width: 80px; }
+.flow-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; border: 1px solid var(--border); background: var(--gray2); }
+.flow-icon.on { background: rgba(200,241,53,0.1); border-color: var(--lime); }
+.flow-label { font-size: 0.68rem; color: var(--muted); text-align: center; }
+.flow-arrow { color: var(--border); font-size: 1rem; flex: 0; margin-bottom: 18px; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="authScreen" class="auth-screen">
+  <div class="auth-bg"></div>
+  <div class="auth-glow"></div>
+  <div class="auth-card">
+    <div class="auth-logo">Call<span>back</span></div>
+    <div class="auth-tagline">Automated appointment reminders for salons</div>
+
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchAuthTab('login')">Sign In</div>
+      <div class="auth-tab" onclick="switchAuthTab('register')">Create Account</div>
+    </div>
+
+    <div id="authError" class="auth-error"></div>
+
+    <div id="loginForm">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="loginEmail" type="email" placeholder="you@yoursalon.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" id="loginPassword" type="password" placeholder="••••••••">
+      </div>
+      <button class="auth-btn" onclick="handleLogin()">Sign In →</button>
+      <div class="auth-divider">— or —</div>
+      <button class="auth-btn" style="background:var(--gray2);color:var(--white);border:1px solid var(--border);" onclick="handleDemo()">Try Demo Account</button>
+    </div>
+
+    <div id="registerForm" style="display:none;">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Your Name</label>
+          <input class="form-input" id="regName" type="text" placeholder="Full name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Salon Name</label>
+          <input class="form-input" id="regSalon" type="text" placeholder="e.g. Glamour Studio">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="regEmail" type="email" placeholder="you@yoursalon.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" id="regPassword" type="password" placeholder="Min 6 characters">
+      </div>
+      <button class="auth-btn" onclick="handleRegister()">Create Account →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ONBOARDING -->
+<div id="onboardingScreen" class="onboarding-screen" style="display:none;">
+  <div class="onboarding-card">
+    <div class="onboarding-step-indicator">
+      <div class="ob-step active" id="ob1"></div>
+      <div class="ob-step" id="ob2"></div>
+      <div class="ob-step" id="ob3"></div>
+    </div>
+
+    <div id="obStep1">
+      <div class="onboarding-title">Welcome! Let's set up your salon. 🎉</div>
+      <div class="onboarding-sub">First, tell us a bit about your salon so we can personalise your experience.</div>
+      <div class="form-group">
+        <label class="form-label">Salon Name</label>
+        <input class="form-input" id="obSalonName" type="text" placeholder="e.g. Glamour Studio">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input class="form-input" id="obCity" type="text" placeholder="e.g. Mumbai">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" id="obPhone" type="tel" placeholder="+91XXXXXXXXXX">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Avg appointments per day</label>
+        <select class="form-select" id="obVolume">
+          <option>1–5</option>
+          <option>6–15</option>
+          <option>16–30</option>
+          <option>30+</option>
+        </select>
+      </div>
+      <button class="ob-btn" onclick="obNext(1)">Continue →</button>
+    </div>
+
+    <div id="obStep2" style="display:none;">
+      <div class="onboarding-title">Connect your Twilio account. 📞</div>
+      <div class="onboarding-sub">Callback uses Twilio to make calls and send SMS. Each salon needs their own Twilio account — this keeps costs separate and transparent.</div>
+      <div class="twilio-info">
+        💡 Go to <strong>twilio.com</strong> → Sign up free → Get your Account SID, Auth Token, and a free phone number. Takes 5 minutes.
+      </div>
+      <div class="form-group">
+        <label class="form-label">Account SID</label>
+        <input class="form-input" id="obSid" type="text" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Auth Token</label>
+        <input class="form-input" id="obToken" type="password" placeholder="Your auth token">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Twilio Phone Number</label>
+        <input class="form-input" id="obFrom" type="text" placeholder="+1XXXXXXXXXX">
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:4px;">
+        <button class="ob-btn" onclick="obNext(2)">Save & Continue →</button>
+        <button class="ob-btn-skip" onclick="obNext(2)">Skip for now</button>
+      </div>
+    </div>
+
+    <div id="obStep3" style="display:none;">
+      <div class="onboarding-title">You're all set! 🚀</div>
+      <div class="onboarding-sub">Callback is ready to start sending reminders. Add your first appointment and watch the automation run.</div>
+      <div style="background:var(--gray2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;">
+        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">What happens next:</div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:0.84rem;">
+          <div>✅ Add a client appointment</div>
+          <div>✅ Callback calls them 24hrs before</div>
+          <div>✅ If no answer, SMS is sent automatically</div>
+          <div>✅ You get notified only if something changes</div>
+        </div>
+      </div>
+      <button class="ob-btn" onclick="finishOnboarding()">Go to Dashboard →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app-shell" id="appShell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Call<span>back</span></div>
+
+    <div class="nav-label">Main</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">◈</span> Dashboard</div>
+    <div class="nav-item" onclick="showPage('appointments',this)"><span class="nav-icon">◷</span> Appointments <span class="nav-badge" id="sideApptCount">0</span></div>
+    <div class="nav-item" onclick="showPage('log',this)"><span class="nav-icon">⚡</span> Activity Log</div>
+
+    <div class="nav-label">Account</div>
+    <div class="nav-item" onclick="showPage('settings',this)"><span class="nav-icon">◎</span> Settings</div>
+
+    <div class="sidebar-bottom">
+      <div class="salon-info">
+        <div class="salon-avatar" id="sideAvatar">S</div>
+        <div>
+          <div class="salon-name" id="sideSalonName">My Salon</div>
+          <div class="salon-plan">Growth Plan</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()">Sign Out</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Dashboard</div>
+          <div class="page-sub" id="dashDate">Loading...</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:var(--muted);">
+            Automation
+            <label style="position:relative;display:inline-block;width:40px;height:22px;">
+              <input type="checkbox" id="automToggle" checked onchange="toggleAutom(this)" style="opacity:0;width:0;height:0;">
+              <span style="position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:22px;transition:.3s;" id="toggleSlider">
+                <span style="position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s;" id="toggleThumb"></span>
+              </span>
+            </label>
+          </div>
+          <button class="btn btn-lime" onclick="openModal()">+ Add Appointment</button>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value lime" id="stTotal">0</div><div class="stat-sub">all appointments</div></div>
+        <div class="stat-card"><div class="stat-label">Confirmed</div><div class="stat-value green" id="stConfirmed">0</div><div class="stat-sub">responded yes</div></div>
+        <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value yellow" id="stPending">0</div><div class="stat-sub">awaiting reminder</div></div>
+        <div class="stat-card"><div class="stat-label">No Answer</div><div class="stat-value red" id="stNoAnswer">0</div><div class="stat-sub">SMS fallback sent</div></div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-title">Automation Flow</div>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="flow-icon on">📋</div><div class="flow-label">Appointment<br>Added</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step"><div class="flow-icon on">⏰</div><div class="flow-label">24hr<br>Trigger</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step"><div class="flow-icon on">📞</div><div class="flow-label">Auto<br>Call</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step"><div class="flow-icon">❓</div><div class="flow-label">No<br>Answer?</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step"><div class="flow-icon">💬</div><div class="flow-label">SMS<br>Fallback</div></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step"><div class="flow-icon">✅</div><div class="flow-label">Owner<br>Notified</div></div>
+        </div>
+      </div>
+
+      <div class="log-wrap">
+        <div class="log-head">
+          <div style="font-size:0.85rem;font-weight:600;display:flex;align-items:center;gap:8px;">
+            <div style="width:7px;height:7px;border-radius:50%;background:var(--lime);animation:pulse 2s infinite;"></div>
+            Live Log
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="clearLog()">Clear</button>
+        </div>
+        <div class="log-body" id="logBody">
+          <div class="log-entry"><span class="log-time">--:--:--</span><span class="log-msg info">System ready. Add appointments to begin.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- APPOINTMENTS -->
+    <div class="page" id="page-appointments">
+      <div class="page-header">
+        <div><div class="page-title">Appointments</div><div class="page-sub" id="apptSubCount">0 total</div></div>
+        <button class="btn btn-lime" onclick="openModal()">+ Add Appointment</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-head"><div class="table-title">All Bookings</div></div>
+        <div id="apptTableBody"></div>
+      </div>
+    </div>
+
+    <!-- LOG PAGE -->
+    <div class="page" id="page-log">
+      <div class="page-header">
+        <div><div class="page-title">Activity Log</div><div class="page-sub">Full history of all automation events</div></div>
+        <button class="btn btn-ghost" onclick="clearLog()">Clear Log</button>
+      </div>
+      <div class="log-wrap">
+        <div class="log-body" id="logBodyFull" style="max-height:600px;">
+          <div class="log-entry"><span class="log-time">--:--:--</span><span class="log-msg info">Waiting for events...</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <div><div class="page-title">Settings</div><div class="page-sub">Configure your salon and Twilio credentials</div></div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-title">Salon Info</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Salon Name</label><input class="form-input" id="setSalonName" type="text"></div>
+          <div class="form-group"><label class="form-label">City</label><input class="form-input" id="setCity" type="text"></div>
+        </div>
+        <button class="btn btn-lime" onclick="saveSettings()">Save</button>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-title">Twilio Credentials <span style="font-size:0.72rem;color:var(--muted);font-weight:400;">(each salon uses their own)</span></div>
+        <div class="twilio-info" style="margin-bottom:16px;">Your Twilio account pays for calls/SMS. This keeps billing transparent and per-salon.</div>
+        <div class="form-group"><label class="form-label">Account SID</label><input class="form-input" id="setSid" type="text" placeholder="ACxxxxxxxx..."></div>
+        <div class="form-group"><label class="form-label">Auth Token</label><input class="form-input" id="setToken" type="password" placeholder="••••••••"></div>
+        <div class="form-group"><label class="form-label">Phone Number</label><input class="form-input" id="setFrom" type="text" placeholder="+1XXXXXXXXXX"></div>
+        <button class="btn btn-lime" onclick="saveTwilio()">Save Credentials</button>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-title">Reminder Settings</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Hours Before</label><input class="form-input" id="setHours" type="number" value="24" min="1" max="72"></div>
+          <div class="form-group"><label class="form-label">Call Timeout (sec)</label><input class="form-input" id="setCallTimeout" type="number" value="30"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">SMS Template</label>
+          <input class="form-input" id="setSmsTemplate" type="text" value="Hi {name}, reminder: your {service} is tomorrow at {time}. Reply YES to confirm or NO to cancel.">
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:5px;">Variables: {name} {service} {time} {date}</div>
+        </div>
+        <button class="btn btn-lime" onclick="saveReminderSettings()">Save</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ADD APPOINTMENT MODAL -->
+<div class="modal-overlay" id="apptModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">New Appointment</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Client Name</label><input class="form-input" id="mName" type="text" placeholder="e.g. Priya Sharma"></div>
+      <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="mPhone" type="tel" placeholder="+91XXXXXXXXXX"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Service</label>
+        <select class="form-select" id="mService">
+          <option>Haircut</option><option>Hair Color</option><option>Facial</option>
+          <option>Manicure</option><option>Pedicure</option><option>Waxing</option>
+          <option>Blowout</option><option>Bridal Package</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Stylist</label><input class="form-input" id="mStylist" type="text" placeholder="e.g. Meera"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="mDate" type="date"></div>
+      <div class="form-group"><label class="form-label">Time</label><input class="form-input" id="mTime" type="time"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-lime" onclick="addAppt()">Add & Schedule Reminder</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ── STATE ──
+let currentUser = null;
+let appointments = [];
+let logs = [];
+let automActive = true;
+let twilioConfig = {};
+let reminderSettings = { hours: 24, callTimeout: 30, smsTemplate: "Hi {name}, reminder: your {service} is tomorrow at {time}. Reply YES to confirm or NO to cancel." };
+let salonSettings = { name: '', city: '' };
+let automInterval = null;
+
+// ── STORAGE HELPERS ──
+const uid = () => currentUser?.email || 'demo';
+const save = (k, v) => localStorage.setItem(`cb_${uid()}_${k}`, JSON.stringify(v));
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(`cb_${uid()}_${k}`)) || d; } catch { return d; } };
+
+// ── AUTH ──
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+  document.getElementById('authError').style.display = 'none';
+}
+
+function showError(msg) {
+  const el = document.getElementById('authError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function handleLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  if (!email || !pass) return showError('Please enter email and password.');
+  const users = JSON.parse(localStorage.getItem('cb_users') || '{}');
+  if (!users[email] || users[email].password !== pass) return showError('Invalid email or password.');
+  currentUser = users[email];
+  startApp();
+}
+
+function handleRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const salon = document.getElementById('regSalon').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPassword').value;
+  if (!name || !email || !pass) return showError('Please fill in all fields.');
+  if (pass.length < 6) return showError('Password must be at least 6 characters.');
+  const users = JSON.parse(localStorage.getItem('cb_users') || '{}');
+  if (users[email]) return showError('Account already exists. Please sign in.');
+  const user = { email, password: pass, name, salonName: salon, isNew: true, createdAt: new Date().toISOString() };
+  users[email] = user;
+  localStorage.setItem('cb_users', JSON.stringify(users));
+  currentUser = user;
+  startApp();
+}
+
+function handleDemo() {
+  const users = JSON.parse(localStorage.getItem('cb_users') || '{}');
+  if (!users['demo@callback.app']) {
+    users['demo@callback.app'] = { email: 'demo@callback.app', password: 'demo123', name: 'Demo User', salonName: 'Demo Salon', isNew: false };
+    localStorage.setItem('cb_users', JSON.stringify(users));
+  }
+  currentUser = users['demo@callback.app'];
+  startApp();
+}
+
+function handleLogout() {
+  currentUser = null;
+  appointments = [];
+  if (automInterval) clearInterval(automInterval);
+  document.getElementById('appShell').classList.remove('visible');
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('onboardingScreen').style.display = 'none';
+}
+
+// ── START APP ──
+function startApp() {
+  document.getElementById('authScreen').style.display = 'none';
+  if (currentUser.isNew) {
+    document.getElementById('onboardingScreen').style.display = 'flex';
+    document.getElementById('obSalonName').value = currentUser.salonName || '';
+  } else {
+    loadAndShowApp();
+  }
+}
+
+// ── ONBOARDING ──
+function obNext(step) {
+  if (step === 1) {
+    const name = document.getElementById('obSalonName').value.trim();
+    if (name) { salonSettings.name = name; salonSettings.city = document.getElementById('obCity').value.trim(); }
+    document.getElementById('obStep1').style.display = 'none';
+    document.getElementById('obStep2').style.display = 'block';
+    document.getElementById('ob1').className = 'ob-step done';
+    document.getElementById('ob2').className = 'ob-step active';
+  } else if (step === 2) {
+    const sid = document.getElementById('obSid').value.trim();
+    const token = document.getElementById('obToken').value.trim();
+    const from = document.getElementById('obFrom').value.trim();
+    if (sid && token && from) twilioConfig = { sid, token, from };
+    document.getElementById('obStep2').style.display = 'none';
+    document.getElementById('obStep3').style.display = 'block';
+    document.getElementById('ob2').className = 'ob-step done';
+    document.getElementById('ob3').className = 'ob-step active';
+  }
+}
+
+function finishOnboarding() {
+  const users = JSON.parse(localStorage.getItem('cb_users') || '{}');
+  users[currentUser.email].isNew = false;
+  if (salonSettings.name) users[currentUser.email].salonName = salonSettings.name;
+  localStorage.setItem('cb_users', JSON.stringify(users));
+  currentUser.isNew = false;
+  document.getElementById('onboardingScreen').style.display = 'none';
+  loadAndShowApp();
+}
+
+// ── LOAD APP ──
+function loadAndShowApp() {
+  appointments = load('appts', []);
+  twilioConfig = load('twilio', {});
+  salonSettings = load('salon', { name: currentUser.salonName || 'My Salon', city: '' });
+  reminderSettings = load('reminder', reminderSettings);
+
+  document.getElementById('appShell').classList.add('visible');
+  document.getElementById('sideSalonName').textContent = salonSettings.name || 'My Salon';
+  document.getElementById('sideAvatar').textContent = (salonSettings.name || 'S')[0].toUpperCase();
+  document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  // Fill settings
+  document.getElementById('setSalonName').value = salonSettings.name || '';
+  document.getElementById('setCity').value = salonSettings.city || '';
+  if (twilioConfig.sid) document.getElementById('setSid').value = twilioConfig.sid;
+  if (twilioConfig.token) document.getElementById('setToken').value = twilioConfig.token;
+  if (twilioConfig.from) document.getElementById('setFrom').value = twilioConfig.from;
+  document.getElementById('setHours').value = reminderSettings.hours;
+  document.getElementById('setCallTimeout').value = reminderSettings.callTimeout;
+  document.getElementById('setSmsTemplate').value = reminderSettings.smsTemplate;
+
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  document.getElementById('mDate').valueAsDate = tomorrow;
+
+  renderAppts();
+  updateStats();
+  startEngine();
+  addLog('info', `Welcome back! System active. ${appointments.length} appointments loaded.`);
+
+  // Toggle styling
+  updateToggleStyle(true);
+}
+
+// ── TOGGLE ──
+function toggleAutom(el) {
+  automActive = el.checked;
+  updateToggleStyle(el.checked);
+  addLog(el.checked ? 'success' : 'warning', el.checked ? '✓ Automation resumed' : '⏸ Automation paused');
+  showToast(el.checked ? 'success' : 'info', el.checked ? 'Automation active' : 'Automation paused');
+}
+
+function updateToggleStyle(on) {
+  const slider = document.getElementById('toggleSlider');
+  const thumb = document.getElementById('toggleThumb');
+  if (slider) slider.style.background = on ? 'var(--lime)' : 'var(--border)';
+  if (thumb) thumb.style.transform = on ? 'translateX(18px)' : 'translateX(0)';
+}
+
+// ── NAV ──
+function showPage(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── MODAL ──
+function openModal() { document.getElementById('apptModal').classList.add('open'); }
+function closeModal() {
+  document.getElementById('apptModal').classList.remove('open');
+  ['mName','mPhone','mStylist'].forEach(id => document.getElementById(id).value = '');
+}
+
+// ── ADD APPOINTMENT ──
+function addAppt() {
+  const name = document.getElementById('mName').value.trim();
+  const phone = document.getElementById('mPhone').value.trim();
+  const service = document.getElementById('mService').value;
+  const stylist = document.getElementById('mStylist').value.trim() || 'Any';
+  const date = document.getElementById('mDate').value;
+  const time = document.getElementById('mTime').value;
+  if (!name || !phone || !date || !time) { showToast('error', 'Fill in all required fields.'); return; }
+
+  const appt = { id: Date.now(), name, phone, service, stylist, date, time, status: 'pending', reminderSent: false, createdAt: new Date().toISOString() };
+  appointments.push(appt);
+  save('appts', appointments);
+  renderAppts(); updateStats(); closeModal();
+
+  const apptDT = new Date(date + 'T' + time);
+  const reminderDT = new Date(apptDT.getTime() - reminderSettings.hours * 3600000);
+  const mins = Math.round((reminderDT - new Date()) / 60000);
+  addLog('info', `New: ${name} (${service}) — ${fmtDate(date)} ${fmtTime(time)}`);
+  addLog('info', `Reminder scheduled ${reminderSettings.hours}hrs before — ${mins > 0 ? mins + ' min from now' : 'triggering now'}`);
+  showToast('success', `✓ Added ${name}. Reminder scheduled.`);
+  if (mins <= 1) setTimeout(() => triggerReminder(appt.id), 2000);
+}
+
+// ── ENGINE ──
+function startEngine() {
+  if (automInterval) clearInterval(automInterval);
+  automInterval = setInterval(() => {
+    if (!automActive) return;
+    const now = new Date();
+    appointments.forEach(a => {
+      if (a.reminderSent || a.status === 'confirmed') return;
+      const dt = new Date(a.date + 'T' + a.time);
+      const rt = new Date(dt.getTime() - reminderSettings.hours * 3600000);
+      if (now >= rt) triggerReminder(a.id);
+    });
+  }, 60000);
+}
+
+async function triggerReminder(id) {
+  const a = appointments.find(x => x.id === id);
+  if (!a || a.reminderSent) return;
+  a.reminderSent = true; a.status = 'calling';
+  save('appts', appointments); renderAppts(); updateStats();
+  addLog('info', `📞 Calling ${a.name} at ${a.phone}...`);
+  showToast('info', `Calling ${a.name}...`);
+  if (!twilioConfig.sid || !twilioConfig.token || !twilioConfig.from) {
+    addLog('warning', '⚠ Twilio not configured — running demo simulation');
+    simulateCall(id); return;
+  }
+  await realCall(id);
+}
+
+async function realCall(id) {
+  const a = appointments.find(x => x.id === id);
+  const salon = salonSettings.name || 'your salon';
+  const twiml = `<Response><Say voice="alice">Hello ${a.name}, this is a reminder from ${salon}. You have a ${a.service} appointment on ${fmtDateSpoken(a.date)} at ${fmtTime(a.time)}. Please call us if you need to reschedule. Thank you!</Say></Response>`;
+  try {
+    const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioConfig.sid}/Calls.json`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Basic ' + btoa(twilioConfig.sid + ':' + twilioConfig.token), 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ To: a.phone, From: twilioConfig.from, Twiml: twiml, Timeout: String(reminderSettings.callTimeout) })
+    });
+    const d = await res.json();
+    if (d.sid) {
+      addLog('success', `✓ Call placed. SID: ${d.sid}`);
+      setTimeout(() => checkCall(id, d.sid), (reminderSettings.callTimeout + 5) * 1000);
+    } else {
+      addLog('error', `Call failed: ${d.message}`);
+      sendSMS(id);
+    }
+  } catch(e) { addLog('error', `Call error: ${e.message}`); sendSMS(id); }
+}
+
+async function checkCall(id, callSid) {
+  const a = appointments.find(x => x.id === id);
+  try {
+    const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioConfig.sid}/Calls/${callSid}.json`, {
+      headers: { 'Authorization': 'Basic ' + btoa(twilioConfig.sid + ':' + twilioConfig.token) }
+    });
+    const d = await res.json();
+    if (d.status === 'completed') {
+      addLog('success', `✓ Call completed for ${a.name}`);
+      a.status = 'confirmed'; save('appts', appointments); renderAppts(); updateStats();
+    } else if (['no-answer','busy','failed'].includes(d.status)) {
+      addLog('warning', `No answer from ${a.name} — sending SMS`);
+      sendSMS(id);
+    }
+  } catch(e) { sendSMS(id); }
+}
+
+async function sendSMS(id) {
+  const a = appointments.find(x => x.id === id);
+  a.status = 'no-answer'; save('appts', appointments); renderAppts(); updateStats();
+  const msg = reminderSettings.smsTemplate.replace('{name}',a.name).replace('{service}',a.service).replace('{time}',fmtTime(a.time)).replace('{date}',fmtDate(a.date));
+  addLog('warning', `Sending SMS to ${a.phone}...`);
+  if (!twilioConfig.sid) {
+    addLog('warning', `[DEMO] SMS: "${msg}"`);
+    a.status = 'sms-sent'; save('appts', appointments); renderAppts(); updateStats();
+    showToast('info', `SMS fallback sent to ${a.name}`); return;
+  }
+  try {
+    const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioConfig.sid}/Messages.json`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Basic ' + btoa(twilioConfig.sid + ':' + twilioConfig.token), 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ To: a.phone, From: twilioConfig.from, Body: msg })
+    });
+    const d = await res.json();
+    if (d.sid) {
+      addLog('success', `✓ SMS sent. SID: ${d.sid}`);
+      a.status = 'sms-sent'; save('appts', appointments); renderAppts(); updateStats();
+      showToast('info', `SMS fallback sent to ${a.name}`);
+    }
+  } catch(e) { addLog('error', `SMS error: ${e.message}`); }
+}
+
+function simulateCall(id) {
+  const a = appointments.find(x => x.id === id);
+  setTimeout(() => {
+    if (Math.random() > 0.4) {
+      addLog('success', `✓ [DEMO] ${a.name} answered — reminder delivered`);
+      a.status = 'confirmed'; save('appts', appointments); renderAppts(); updateStats();
+      showToast('success', `${a.name} confirmed via call`);
+    } else {
+      addLog('warning', `[DEMO] ${a.name} didn't answer — sending SMS`);
+      a.status = 'no-answer'; save('appts', appointments); renderAppts(); updateStats();
+      setTimeout(() => {
+        addLog('info', `[DEMO] SMS sent to ${a.name}`);
+        a.status = 'sms-sent'; save('appts', appointments); renderAppts(); updateStats();
+        showToast('info', `SMS fallback sent to ${a.name}`);
+      }, 3000);
+    }
+  }, 4000);
+}
+
+// ── RENDER ──
+function renderAppts() {
+  const count = appointments.length;
+  document.getElementById('sideApptCount').textContent = count;
+  document.getElementById('apptSubCount').textContent = count + ' appointment' + (count !== 1 ? 's' : '');
+
+  const body = document.getElementById('apptTableBody');
+  if (!count) {
+    body.innerHTML = `<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No appointments yet</div><div class="empty-sub">Add your first appointment to get started</div></div>`;
+    return;
+  }
+  const sorted = [...appointments].sort((a,b) => new Date(a.date+'T'+a.time) - new Date(b.date+'T'+b.time));
+  body.innerHTML = `<table>
+    <thead><tr><th>Client</th><th>Phone</th><th>Service</th><th>Stylist</th><th>Date & Time</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>${sorted.map(a => `<tr>
+      <td><strong>${a.name}</strong></td>
+      <td style="color:var(--muted)">${a.phone}</td>
+      <td>${a.service}</td>
+      <td style="color:var(--muted)">${a.stylist}</td>
+      <td>${fmtDate(a.date)}<br><span style="color:var(--muted);font-size:0.75rem">${fmtTime(a.time)}</span></td>
+      <td>${sBadge(a.status)}</td>
+      <td style="display:flex;gap:6px;">
+        ${!a.reminderSent ? `<button class="btn btn-ghost btn-sm" onclick="triggerReminder(${a.id})">Send Now</button>` : ''}
+        ${a.status !== 'confirmed' ? `<button class="btn btn-ghost btn-sm" onclick="markDone(${a.id})">✓</button>` : ''}
+        <button class="btn btn-danger btn-sm" onclick="delAppt(${a.id})">✕</button>
+      </td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function sBadge(s) {
+  const m = { pending:'s-pending', confirmed:'s-confirmed', calling:'s-calling', 'no-answer':'s-noanswer', 'sms-sent':'s-sms' };
+  const l = { pending:'Pending', confirmed:'Confirmed', calling:'Calling...', 'no-answer':'No Answer', 'sms-sent':'SMS Sent' };
+  return `<span class="status ${m[s]||'s-pending'}"><span class="s-dot"></span>${l[s]||s}</span>`;
+}
+
+function updateStats() {
+  document.getElementById('stTotal').textContent = appointments.length;
+  document.getElementById('stConfirmed').textContent = appointments.filter(a=>a.status==='confirmed').length;
+  document.getElementById('stPending').textContent = appointments.filter(a=>a.status==='pending').length;
+  document.getElementById('stNoAnswer').textContent = appointments.filter(a=>['no-answer','sms-sent'].includes(a.status)).length;
+}
+
+function markDone(id) {
+  const a = appointments.find(x=>x.id===id);
+  a.status = 'confirmed'; save('appts', appointments); renderAppts(); updateStats();
+  addLog('success', `✓ ${a.name} manually confirmed`);
+  showToast('success', `${a.name} confirmed`);
+}
+
+function delAppt(id) {
+  const a = appointments.find(x=>x.id===id);
+  appointments = appointments.filter(x=>x.id!==id);
+  save('appts', appointments); renderAppts(); updateStats();
+  addLog('info', `Appointment removed: ${a.name}`);
+}
+
+// ── SETTINGS ──
+function saveSettings() {
+  salonSettings.name = document.getElementById('setSalonName').value.trim();
+  salonSettings.city = document.getElementById('setCity').value.trim();
+  save('salon', salonSettings);
+  document.getElementById('sideSalonName').textContent = salonSettings.name || 'My Salon';
+  document.getElementById('sideAvatar').textContent = (salonSettings.name||'S')[0].toUpperCase();
+  showToast('success', '✓ Salon settings saved');
+  addLog('success', '✓ Salon info updated');
+}
+
+function saveTwilio() {
+  twilioConfig = {
+    sid: document.getElementById('setSid').value.trim(),
+    token: document.getElementById('setToken').value.trim(),
+    from: document.getElementById('setFrom').value.trim()
+  };
+  save('twilio', twilioConfig);
+  showToast('success', '✓ Twilio credentials saved');
+  addLog('success', '✓ Twilio configured — real calls enabled');
+}
+
+function saveReminderSettings() {
+  reminderSettings.hours = parseInt(document.getElementById('setHours').value);
+  reminderSettings.callTimeout = parseInt(document.getElementById('setCallTimeout').value);
+  reminderSettings.smsTemplate = document.getElementById('setSmsTemplate').value;
+  save('reminder', reminderSettings);
+  showToast('success', '✓ Reminder settings saved');
+  addLog('info', `Reminder timing set to ${reminderSettings.hours}hrs before`);
+}
+
+// ── LOG ──
+function addLog(type, msg) {
+  const time = new Date().toLocaleTimeString('en-IN', { hour12: false });
+  const html = `<div class="log-entry"><span class="log-time">${time}</span><span class="log-msg ${type}">${msg}</span></div>`;
+  const b1 = document.getElementById('logBody');
+  const b2 = document.getElementById('logBodyFull');
+  b1.insertAdjacentHTML('afterbegin', html);
+  b2.insertAdjacentHTML('afterbegin', html);
+  while (b1.children.length > 20) b1.removeChild(b1.lastChild);
+  while (b2.children.length > 200) b2.removeChild(b2.lastChild);
+}
+
+function clearLog() {
+  const empty = `<div class="log-entry"><span class="log-time">--:--:--</span><span class="log-msg info">Log cleared.</span></div>`;
+  document.getElementById('logBody').innerHTML = empty;
+  document.getElementById('logBodyFull').innerHTML = empty;
+}
+
+// ── TOAST ──
+function showToast(type, msg) {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ── HELPERS ──
+function fmtDate(d) { return new Date(d+'T12:00:00').toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }); }
+function fmtTime(t) { const [h,m] = t.split(':'); const hr = parseInt(h); return `${hr>12?hr-12:hr||12}:${m} ${hr>=12?'PM':'AM'}`; }
+function fmtDateSpoken(d) { return new Date(d+'T12:00:00').toLocaleDateString('en-IN', { weekday:'long', month:'long', day:'numeric' }); }
+</script>
+</body>
+</html>
