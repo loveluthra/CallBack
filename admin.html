@@ -431,5 +431,9 @@ function sBadge(s) {
 function fmtDate(d) { return new Date(d+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}); }
 function fmtTime(t) { if(!t) return ''; const [h,m]=t.split(':'); const hr=parseInt(h); return `${hr>12?hr-12:hr||12}:${m} ${hr>=12?'PM':'AM'}`; }
 </script>
+<script>
+  window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>
