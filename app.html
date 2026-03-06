@@ -724,5 +724,9 @@ function fmtTime(t) { if(!t) return ''; const [h,m]=t.split(':'); const hr=parse
 const saved = sessionStorage.getItem('cb_salon');
 if (saved) { currentSalon = JSON.parse(saved); startApp(); }
 </script>
+<script>
+  window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>
